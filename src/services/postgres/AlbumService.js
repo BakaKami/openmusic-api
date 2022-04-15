@@ -12,7 +12,7 @@ class AlbumService {
     const id = `album-${nanoid(16)}`;
 
     const query = {
-      text: 'INSERT INTO album VALUES($1, $2, $3) RETURNING id',
+      text: 'INSERT INTO albums VALUES($1, $2, $3) RETURNING id',
       values: [id, name, year],
     };
 
@@ -27,7 +27,7 @@ class AlbumService {
 
   async getAlbumById(id) {
     const query = {
-      text: 'SELECT * FROM album WHERE id = $1',
+      text: 'SELECT * FROM albums WHERE id = $1',
       values: [id],
     };
 
@@ -42,7 +42,7 @@ class AlbumService {
 
   async editAlbumById(id, { name, year }) {
     const query = {
-      text: 'UPDATE album SET name = $1, year = $2 WHERE id = $3 RETURNING id',
+      text: 'UPDATE albums SET name = $1, year = $2 WHERE id = $3 RETURNING id',
       values: [name, year, id],
     };
 
@@ -55,7 +55,7 @@ class AlbumService {
 
   async deleteAlbumById(id) {
     const query = {
-      text: 'DELETE FROM album WHERE id = $1 RETURNING id',
+      text: 'DELETE FROM albums WHERE id = $1 RETURNING id',
       values: [id],
     };
 

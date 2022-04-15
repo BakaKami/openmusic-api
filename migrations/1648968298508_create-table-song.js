@@ -1,9 +1,5 @@
-/* eslint-disable camelcase */
-
-exports.shorthands = undefined;
-
 exports.up = (pgm) => {
-  pgm.createTable('song', {
+  pgm.createTable('songs', {
     id: {
       type: 'VARCHAR(30)',
       primaryKey: true,
@@ -27,12 +23,12 @@ exports.up = (pgm) => {
     duration: {
       type: 'SMALLINT',
     },
-    albumid: {
-      type: 'TEXT',
+    album_id: {
+      type: 'VARCHAR(30)',
     },
   });
 };
 
 exports.down = (pgm) => {
-  pgm.dropTable('song');
+  pgm.dropTable('songs');
 };
