@@ -116,11 +116,23 @@ const init = async () => {
     }
 
     if (response instanceof Error) {
+      // authentication error
+      if (response.output.payload.statusCode === 401) {
+        const newResponse = h.response({
+          status: 'fail',
+          message: response.message,
+        });
+        newResponse.code(response.output.payload.statusCode);
+
+        return newResponse;
+      }
+
       const newResponse = h.response({
         status: 'error',
         message: 'Sedang terjadi gangguan pada server',
       });
       newResponse.code(500);
+      console.log(response.message);
 
       return newResponse;
     }

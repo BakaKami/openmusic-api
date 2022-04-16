@@ -6,7 +6,7 @@ const NotFoundError = require('../../exceptions/NotFoundError');
 
 class PlaylistService {
   constructor() {
-    this.pool = new Pool();
+    this._pool = new Pool();
   }
 
   async verifyPlaylistOwner(id, owner) {
@@ -47,7 +47,7 @@ class PlaylistService {
 
   async getAllPlaylists(owner) {
     const query = {
-      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN users ON playlists.owner = users.id WHERE playlists.owner = S1',
+      text: 'SELECT playlists.id, playlists.name, users.username FROM playlists LEFT JOIN users ON playlists.owner = users.id WHERE playlists.owner = $1',
       values: [owner],
     };
 
@@ -62,7 +62,7 @@ class PlaylistService {
       values: [id],
     };
 
-    const rows = await this.pool.query(query);
+    const { rows } = await this._pool.query(query);
 
     if (!rows.length) {
       throw new NotFoundError('Playlist gagal dihapus. Id tidak ditemukan');
@@ -71,6 +71,8 @@ class PlaylistService {
 
   async addSongToPlaylistBySongId(playlistId, { songId }) {
     const id = `ps-${nanoid(16)}`;
+
+    await this.verifySongIsExist(songId);
 
     const query = {
       text: 'INSERT INTO playlist_songs VALUES($1, $2, $3) RETURNING id',
@@ -112,7 +114,7 @@ class PlaylistService {
 
   async deleteSongFromPlaylistBySongId(playlistId, { songId }) {
     const query = {
-      text: 'DELETE FROM playlist_songs WHERE song_id = $1 AND playlist_id = $2',
+      text: 'DELETE FROM playlist_songs WHERE song_id = $1 AND playlist_id = $2 RETURNING id',
       values: [songId, playlistId],
     };
 
@@ -120,6 +122,18 @@ class PlaylistService {
 
     if (!rows.length) {
       throw new NotFoundError('Lagu gagal dihapus dari playlist. Playlist tidak ditemukan');
+    }
+  }
+
+  async verifySongIsExist(id) {
+    const query = {
+      text: 'SELECT * FROM songs WHERE id = $1',
+      values: [id],
+    };
+    const { rows } = await this._pool.query(query);
+
+    if (!rows.length) {
+      throw new NotFoundError('Lagu tidak ditemukan');
     }
   }
 }
