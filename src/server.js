@@ -22,6 +22,8 @@ const PlaylistValidator = require('./validator/playlists');
 const CollaborationService = require('./services/postgres/CollaborationService');
 const CollaborationValidator = require('./validator/collaborations');
 const collaborations = require('./api/collaborations');
+const ActivityService = require('./services/postgres/ActivityService');
+const activities = require('./api/activities');
 
 const init = async () => {
   const collaborationService = new CollaborationService();
@@ -30,6 +32,7 @@ const init = async () => {
   const userService = new UserService();
   const authenticationService = new AuthenticationService();
   const playlistService = new PlaylistService(collaborationService);
+  const activityService = new ActivityService();
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -99,7 +102,8 @@ const init = async () => {
     {
       plugin: playlists,
       options: {
-        service: playlistService,
+        playlistService,
+        activityService,
         validator: PlaylistValidator,
       },
     },
@@ -108,7 +112,15 @@ const init = async () => {
       options: {
         collaborationService,
         playlistService,
+        userService,
         validator: CollaborationValidator,
+      },
+    },
+    {
+      plugin: activities,
+      options: {
+        activityService,
+        playlistService,
       },
     },
   ]);
@@ -144,7 +156,7 @@ const init = async () => {
         message: 'Sedang terjadi gangguan pada server',
       });
       newResponse.code(500);
-      console.log(response.message);
+      // console.log(response.message);
 
       return newResponse;
     }

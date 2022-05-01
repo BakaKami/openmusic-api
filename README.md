@@ -2,7 +2,14 @@
 Music playlist API built using hapi.js
 
 ## Current Version
-***Version 1.2.1***
+***Version 1.3.0***
+
+### Version 1.3.0
+[NEW FEATURES]
+- Playlist activity record
+
+[ADJUSTMENT]
+- Enhance user payload validation
 
 ### Version 1.2.1
 [NEW FEATURES]
