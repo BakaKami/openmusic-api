@@ -2,7 +2,13 @@
 Music playlist API built using hapi.js
 
 ## Current Version
-***Version 1.3.0***
+***Version 1.4.0***
+
+### Version 1.4.0
+[NEW FEATURES]
+- Export songs on playlist
+- Upload album's cover
+- Like/unlike album (cache implemented)
 
 ### Version 1.3.0
 [NEW FEATURES]

@@ -2,6 +2,9 @@ require('dotenv').config();
 
 const Hapi = require('@hapi/hapi');
 const Jwt = require('@hapi/jwt');
+const Inert = require('@hapi/inert');
+const path = require('path');
+
 const albums = require('./api/albums');
 const authentications = require('./api/authentications');
 const songs = require('./api/songs');
@@ -24,15 +27,24 @@ const CollaborationValidator = require('./validator/collaborations');
 const collaborations = require('./api/collaborations');
 const ActivityService = require('./services/postgres/ActivityService');
 const activities = require('./api/activities');
+const _exports = require('./api/exports');
+const ProducerService = require('./services/rabbitmq/ProducerService');
+const ExportsValidator = require('./validator/exports');
+const StorageService = require('./services/storage/StorageService');
+const uploads = require('./api/uploads');
+const UploadsValidator = require('./validator/uploads');
+const CacheService = require('./services/redis/CacheService');
 
 const init = async () => {
+  const cacheService = new CacheService();
   const collaborationService = new CollaborationService();
-  const albumService = new AlbumService();
+  const albumService = new AlbumService(cacheService);
   const songService = new SongService();
   const userService = new UserService();
   const authenticationService = new AuthenticationService();
   const playlistService = new PlaylistService(collaborationService);
   const activityService = new ActivityService();
+  const storageService = new StorageService(path.resolve(__dirname, 'api/uploads/file/images'));
 
   const server = Hapi.server({
     port: process.env.PORT,
@@ -48,6 +60,9 @@ const init = async () => {
   await server.register([
     {
       plugin: Jwt,
+    },
+    {
+      plugin: Inert,
     },
   ]);
 
@@ -123,6 +138,22 @@ const init = async () => {
         playlistService,
       },
     },
+    {
+      plugin: _exports,
+      options: {
+        playlistService,
+        producerService: ProducerService,
+        validator: ExportsValidator,
+      },
+    },
+    {
+      plugin: uploads,
+      options: {
+        storageService,
+        albumService,
+        validator: UploadsValidator,
+      },
+    },
   ]);
 
   // error handling
@@ -141,12 +172,23 @@ const init = async () => {
 
     if (response instanceof Error) {
       // authentication error
-      if (response.output.payload.statusCode === 401) {
+      if (response.output.statusCode === 401) {
         const newResponse = h.response({
           status: 'fail',
           message: response.message,
         });
-        newResponse.code(response.output.payload.statusCode);
+        newResponse.code(response.output.statusCode);
+
+        return newResponse;
+      }
+
+      // payload too large
+      if (response.output.statusCode === 413) {
+        const newResponse = h.response({
+          status: 'fail',
+          message: response.message,
+        });
+        newResponse.code(response.output.statusCode);
 
         return newResponse;
       }
@@ -156,7 +198,7 @@ const init = async () => {
         message: 'Sedang terjadi gangguan pada server',
       });
       newResponse.code(500);
-      // console.log(response.message);
+      console.log(response.message);
 
       return newResponse;
     }
